@@ -1,5 +1,3 @@
-local SCRIPT_URL = "https://raw.githubusercontent.com/fluxgitscripts/vending-rob/refs/heads/main/.lua"
-
 local Players             = game:GetService("Players")
 local TweenService        = game:GetService("TweenService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -421,7 +419,7 @@ local function doServerHop()
     if queue_on_teleport then
         local payload = [[
             wait(3)
-            loadstring(game:HttpGet("]] .. SCRIPT_URL .. [["))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/fluxgitscripts/vending-rob/refs/heads/main/.lua"))()
         ]]
         pcall(function() queue_on_teleport(payload) end)
     end
