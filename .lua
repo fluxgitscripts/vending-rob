@@ -10,6 +10,11 @@ local queue_on_teleport = syn and syn.queue_on_teleport or queue_on_teleport or 
 
 local plr = Players.LocalPlayer
 
+-- Positionen
+local SERVERHOP_POSITION = Vector3.new(-1292.9005126953125, -2, 3685.330810546875)
+local DROP_Y             = -2
+local SAFE_POSITION      = Vector3.new(-1292.9005126953125, DROP_Y, 3685.330810546875)
+
 local EJw = game:GetService("ReplicatedStorage"):WaitForChild("EJw")
 local RemoteEvents = {
     RobEvent = EJw:WaitForChild("a3126821-130a-4135-80e1-1d28cece4007"),
@@ -27,13 +32,9 @@ local vendingLoopThread    = nil
 local instantCollectThread = nil
 
 local teleportActive   = false
-local currentTween     = nil
+local currentTween      = nil
 local currentTweenConn = nil
 local tweenSpeed       = _G.flightSpeed
-
-local SERVERHOP_POSITION = Vector3.new(-1292.9005126953125, -2, 3685.330810546875)
-local DROP_Y             = -2
-local SAFE_POSITION      = Vector3.new(-1292.9005126953125, DROP_Y, 3685.330810546875)
 
 local function getChar()
     local char = plr.Character
@@ -424,9 +425,7 @@ local function flyUpAndHop()
             val:Destroy()
         end
     end
-    -- rest bleibt gleich ...
-end
-
+    
     task.wait(0.3)
 
     if queue_on_teleport then
