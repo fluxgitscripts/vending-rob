@@ -507,21 +507,21 @@ local Window = OrionLib:MakeWindow({
     HidePremium  = false,
     Intro        = true,
     IntroText    = "Vending Rob",
-    IntroIcon    = "rbxassetid://4483345998",
+    IntroIcon    = "rbxassetid://79390235538362",
     SaveConfig   = true,
     ConfigFolder = "VendingRobConfig",
     Icon         = "rbxassetid://4483345998"
 })
 
 local MainTab = Window:MakeTab({
-    Name        = "Main",
+    Name        = "Vending Rob",
     Icon        = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
 MainTab:AddToggle({
     Name     = "Activate Vending Rob",
-    Default  = false,
+    Default  = true,
     Save     = false,
     Flag     = "vendingActive",
     Callback = function(Value)
@@ -529,12 +529,15 @@ MainTab:AddToggle({
     end
 })
 
+local Section = MainTab:AddSection({
+                    Name = 'Settings'
+                })
 MainTab:AddSlider({
     Name      = "Flight Speed",
     Min       = 50,
     Max       = 250,
     Default   = 160,
-    Color     = Color3.fromRGB(255, 255, 255),
+    Color     = Color3.fromRGB(137, 207, 240),
     Increment = 10,
     ValueName = "speed",
     Save      = true,
@@ -550,7 +553,7 @@ MainTab:AddSlider({
     Min       = 30,
     Max       = 100,
     Default   = 55,
-    Color     = Color3.fromRGB(255, 255, 255),
+    Color     = Color3.fromRGB(137, 207, 240),
     Increment = 5,
     ValueName = "studs",
     Save      = true,
