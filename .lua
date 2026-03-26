@@ -424,8 +424,6 @@ local function flyUpAndHop()
             val:Destroy()
         end
     end
-    -- rest bleibt gleich ...
-end
 
     task.wait(0.3)
 
