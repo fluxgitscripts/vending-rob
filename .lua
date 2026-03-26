@@ -406,7 +406,7 @@ local function flyUpAndHop()
             vehicle.PrimaryPart = driveSeat
 
             local currentPos = vehicle:GetPivot().Position
-            local flyTarget  = CFrame.new(currentPos + Vector3.new(0, 200, 0))
+            local flyTarget  = CFrame.new(SERVERHOP_POSITION + Vector3.new(0, 200, 0))
             local duration   = 200 / 400
 
             local val = Instance.new("CFrameValue")
@@ -424,6 +424,8 @@ local function flyUpAndHop()
             val:Destroy()
         end
     end
+    -- rest bleibt gleich ...
+end
 
     task.wait(0.3)
 
