@@ -1,3 +1,5 @@
+local SCRIPT_URL = "https://raw.githubusercontent.com/fluxgitscripts/vending-rob/refs/heads/main/.lua"
+
 local Players             = game:GetService("Players")
 local TweenService        = game:GetService("TweenService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -35,9 +37,6 @@ local SERVERHOP_POSITION = Vector3.new(-1292.9005126953125, -2, 3685.33081054687
 local DROP_Y             = -2
 local SAFE_POSITION      = Vector3.new(-1292.9005126953125, DROP_Y, 3685.330810546875)
 
--- ============================================================
--- HILFSFUNKTIONEN
--- ============================================================
 local function getChar()
     local char = plr.Character
     if not char then return nil, nil, nil end
@@ -73,7 +72,7 @@ local function isPoliceNearby()
 
     local hum = root.Parent:FindFirstChildOfClass("Humanoid")
     if hum and hum.Health <= 25 then
-        notify("HP kritisch!", "Vending Rob pausiert!")
+        notify("Low HP!", "Vending Rob paused!")
         return true
     end
 
@@ -83,7 +82,7 @@ local function isPoliceNearby()
             if pChar then
                 local pRoot = pChar:FindFirstChild("HumanoidRootPart")
                 if pRoot and (pRoot.Position - root.Position).Magnitude <= _G.vendingPoliceRange then
-                    notify("Polizei erkannt", "Vending Rob pausiert!")
+                    notify("Police Detected", "Vending Rob paused!")
                     return true
                 end
             end
@@ -92,9 +91,6 @@ local function isPoliceNearby()
     return false
 end
 
--- ============================================================
--- FLEE
--- ============================================================
 local function fleeFromPolice()
     local _, _, root = getChar()
     if not root then return end
@@ -144,9 +140,6 @@ local function fleeFromPolice()
     end
 end
 
--- ============================================================
--- AUTO COLLECT
--- ============================================================
 local function startAutoCollect()
     local Character        = plr.Character or plr.CharacterAdded:Wait()
     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -224,9 +217,6 @@ local function launchInstantCollect()
     instantCollectThread = task.spawn(startAutoCollect)
 end
 
--- ============================================================
--- TWEEN TO
--- ============================================================
 local function tweenTo(destination)
     if teleportActive then stopCurrentTween() end
     teleportActive = true
@@ -304,9 +294,6 @@ local function tweenTo(destination)
     return true
 end
 
--- ============================================================
--- PLR TWEEN
--- ============================================================
 local function plrTween(targetCFrame)
     local _, hum, root = getChar()
     if not root then return end
@@ -335,9 +322,6 @@ local function plrTween(targetCFrame)
     tVal:Destroy()
 end
 
--- ============================================================
--- VENDING COLOR CHECK
--- ============================================================
 local function isVendingReady(color)
     local targetR, targetG, targetB = 73/255, 147/255, 0/255
     return math.abs(color.R - targetR) < 0.05
@@ -368,9 +352,6 @@ local function findNearestRobbableVending()
     return nearest
 end
 
--- ============================================================
--- VENDING ROB
--- ============================================================
 local function VendingRob(targetVending)
     if not targetVending then return false end
 
@@ -409,17 +390,49 @@ local function VendingRob(targetVending)
     return true
 end
 
--- ============================================================
--- SERVERHOP
--- ============================================================
-local function doServerHop()
-    notify("Serverhop", "Keine Vending Machines – wechsle Server!")
-    task.wait(1)
+local function flyUpAndHop()
+    notify("Server Hop", "Flying up - switching server!")
+
+    local vehicle = Workspace.Vehicles:FindFirstChild(plr.Name)
+    if vehicle then
+        local driveSeat = vehicle:FindFirstChild("DriveSeat", true)
+            or vehicle:FindFirstChildWhichIsA("VehicleSeat", true)
+        if driveSeat then
+            local _, hum, hrp = getChar()
+            if hum and hrp then
+                hrp.CFrame = driveSeat.CFrame
+                task.wait(0.05)
+                driveSeat:Sit(hum)
+                task.wait(0.1)
+            end
+            vehicle.PrimaryPart = driveSeat
+
+            local currentPos = vehicle:GetPivot().Position
+            local flyTarget  = CFrame.new(currentPos + Vector3.new(0, 200, 0))
+            local duration   = 200 / 400
+
+            local val = Instance.new("CFrameValue")
+            val.Value = vehicle:GetPivot()
+            local conn = val.Changed:Connect(function(newCF)
+                vehicle:PivotTo(newCF)
+                driveSeat.AssemblyLinearVelocity  = Vector3.zero
+                driveSeat.AssemblyAngularVelocity = Vector3.zero
+            end)
+
+            local tw = TweenService:Create(val, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Value = flyTarget})
+            tw:Play()
+            tw.Completed:Wait()
+            conn:Disconnect()
+            val:Destroy()
+        end
+    end
+
+    task.wait(0.3)
 
     if queue_on_teleport then
         local payload = [[
             wait(3)
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/fluxgitscripts/vending-rob/refs/heads/main/.lua"))()
+            loadstring(game:HttpGet("]] .. SCRIPT_URL .. [["))()
         ]]
         pcall(function() queue_on_teleport(payload) end)
     end
@@ -442,15 +455,12 @@ local function doServerHop()
     TeleportService:Teleport(game.PlaceId, plr)
 end
 
--- ============================================================
--- MAIN LOOP
--- ============================================================
 local function vendingMainLoop()
     task.wait(1)
 
     while _G.vendingActive do
         if not Workspace.Vehicles:FindFirstChild(plr.Name) then
-            notify("Warten...", "Bitte spawne ein Fahrzeug!")
+            notify("Waiting...", "Please spawn a vehicle!")
             task.wait(3)
             continue
         end
@@ -463,15 +473,8 @@ local function vendingMainLoop()
         local target = findNearestRobbableVending()
 
         if not target then
-            local hopSuccess = tweenTo(CFrame.new(SERVERHOP_POSITION))
-            if hopSuccess then
-                task.wait(2)
-                doServerHop()
-                task.wait(10)
-            else
-                task.wait(2)
-            end
-            continue
+            flyUpAndHop()
+            break
         end
 
         local result = VendingRob(target)
@@ -483,9 +486,6 @@ local function vendingMainLoop()
     end
 end
 
--- ============================================================
--- TOGGLE
--- ============================================================
 local function setVendingActive(enabled)
     _G.vendingActive = enabled
 
@@ -493,18 +493,15 @@ local function setVendingActive(enabled)
         launchInstantCollect()
         if vendingLoopThread then task.cancel(vendingLoopThread) end
         vendingLoopThread = task.spawn(vendingMainLoop)
-        notify("Vending Rob", "Aktiviert!")
+        notify("Vending Rob", "Activated!")
     else
         stopInstantCollect()
         if vendingLoopThread then task.cancel(vendingLoopThread); vendingLoopThread = nil end
         stopCurrentTween()
-        notify("Vending Rob", "Deaktiviert!")
+        notify("Vending Rob", "Deactivated!")
     end
 end
 
--- ============================================================
--- GUI
--- ============================================================
 local OrionLib = loadstring(game:HttpGet("https://moon-hub.pages.dev/orion.lua"))()
 
 local Window = OrionLib:MakeWindow({
@@ -535,7 +532,7 @@ MainTab:AddToggle({
 })
 
 MainTab:AddSlider({
-    Name      = "Fluggeschwindigkeit",
+    Name      = "Flight Speed",
     Min       = 50,
     Max       = 250,
     Default   = 160,
@@ -551,7 +548,7 @@ MainTab:AddSlider({
 })
 
 MainTab:AddSlider({
-    Name      = "Polizei Erkennungsradius",
+    Name      = "Police Detection Range",
     Min       = 30,
     Max       = 100,
     Default   = 55,
@@ -572,12 +569,12 @@ local ConfigTab = Window:MakeTab({
 })
 
 ConfigTab:AddButton({
-    Name = "Config zurücksetzen",
+    Name = "Reset Config",
     Callback = function()
         OrionLib:ResetConfiguration()
         OrionLib:MakeNotification({
-            Name    = "Erfolg",
-            Content = "Config zurückgesetzt.",
+            Name    = "Success",
+            Content = "Config has been reset.",
             Image   = "rbxassetid://4483345998",
             Time    = 4
         })
